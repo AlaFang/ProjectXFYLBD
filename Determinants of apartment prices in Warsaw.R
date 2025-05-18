@@ -1,3 +1,7 @@
+install.packages("readxl")      
+library(readxl)
+Apartment <- read_excel("Apartment.xlsx")
+
 Apartment$type <- factor(Apartment$type, levels = c(1,2,3), 
                          labels = c("tenement", "blockOfFlats", 
                                     "apartmentBuilding"))
@@ -133,32 +137,48 @@ stargazer(regression2, robust1, robust2, type="text")
 ols_vif_tol(regression2)
 regression1 <- lm(price ~ type + squareMeters + FloorType  + centreDistance + poiCount + ownership  + hasBalcony + hasElevator,data=Apartment)
 summary(regression1)
-ols_regress(price ~ type + squareMeters + FloorType  + centreDistance + poiCount + ownership  + hasBalcony + hasElevator,data=Apartment)
+ols_regress <- lm(price ~ type + squareMeters + FloorType  + centreDistance + poiCount + ownership  + hasBalcony + hasElevator,data=Apartment)
+
 Apartment$lev <- hatvalues(regression1)
 Apartment$rstd <- rstandard(regression1)
 Apartment$cookd <- cooks.distance(regression1)
 lev_threshold <- (2*(length(regression1$coefficients)/nrow(Apartment))) #0.008915
 length(Apartment$lev[Apartment$lev > lev_threshold])
 length(Apartment$rstd[abs(Apartment$rstd)>2])
+length(regression1$coefficients)
 cook_threshold <- 4/nrow(Apartment) #0.001486
 length(Apartment$cookd[Apartment$cookd > cook_threshold])
 nontypical <- Apartment[Apartment$lev > lev_threshold & abs(Apartment$rstd)>2
                       & Apartment$cookd > cook_threshold, ] # 17obs.of 12 variables
 plot(regression1, which=4, cook.level= cook_threshold)
 abline(h=cook_threshold, lty=2, col= "red")
+
+install.packages("olsrr")
+library(olsrr)
 ols_plot_cooksd_chart(regression1)
 plot(regression1, which=5)
+
+install.packages("car") 
+library(car)
 influencePlot(regression1, id.method="noteworthy", 
               main="Leverage and residuals", 
               sub= "Circle size is proportional to Cook's distance")
+
 Apartment_new <- Apartment[-c(1012,1640,2290), ] 
 regression_new <- lm(price ~ type + squareMeters + FloorType  + centreDistance + poiCount + ownership  + hasBalcony + hasElevator,data=Apartment_new)
 summary(regression1)
+
+install.packages("lmtest")  
+library(lmtest) 
 bptest(regression_new)
-jarqueberaTest(regression_new$residuals)
-bptest(regression_new)
+
+install.packages("tseries")    
+library(tseries)
+jarque.bera.test(regression_new$residuals)
+
 resettest(regression_new, type="fitted")
 resettest(regression_new, type="regressor")
+
 Apartment_new$type <- factor(Apartment_new$type, levels = c(1,2,3), 
                          labels = c("tenement", "blockOfFlats", 
                                     "apartmentBuilding"))
